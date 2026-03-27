@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: feedback
+    // Fields:
+    //   - userId: string (required)
+    //   - userEmail: string (optional)
+    //   - rating: number (required, 1-5)
+    //   - comment: string (optional)
+    //   - forecastId: string (optional)
+    //   - timestamp: string (required, ISO 8601)
+    //
+    // Collection: userDatasets
+    // Fields:
+    //   - userId: string (required)
+    //   - fileName: string (required)
+    //   - rawData: string (required)
+    //   - analysis: string (optional)
+    //   - timestamp: string (required, ISO 8601)
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidRating(rating) {
+      return rating is number && rating >= 1 && rating <= 5;
+    }
+
+    function isValidString(str, maxLen) {
+      return str is string && str.size() <= maxLen;
+    }
+
+    function isValidFeedback(data) {
+      let allowedFields = ['userId', 'userEmail', 'rating', 'comment', 'forecastId', 'timestamp'];
+      return data.keys().hasOnly(allowedFields) &&
+             data.keys().hasAll(['userId', 'rating', 'timestamp']) &&
+             data.userId == request.auth.uid &&
+             isValidRating(data.rating) &&
+             isValidString(data.timestamp, 50);
+    }
+
+    function isValidDataset(data) {
+      let allowedFields = ['userId', 'fileName', 'rawData', 'analysis', 'timestamp'];
+      return data.keys().hasOnly(allowedFields) &&
+             data.keys().hasAll(['userId', 'fileName', 'rawData', 'timestamp']) &&
+             data.userId == request.auth.uid &&
+             isValidString(data.fileName, 255) &&
+             isValidString(data.rawData, 1000000) && // Max 1MB
+             isValidString(data.timestamp, 50);
+    }
+
+    match /feedback/{feedbackId} {
+      allow create: if isAuthenticated() && isValidFeedback(request.resource.data);
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+
+    match /userDatasets/{datasetId} {
+      allow create: if isAuthenticated() && isValidDataset(request.resource.data);
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+  }
+}

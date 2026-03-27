@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "feedback": {
+      "title": "User Feedback",
+      "description": "User input on forecast accuracy and usability.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "rating": { "type": "number", "description": "1-5 rating" },
+        "comment": { "type": "string" },
+        "forecastId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "rating", "timestamp"]
+    },
+    "userDatasets": {
+      "title": "User Dataset",
+      "description": "Custom CSV data uploaded by users for analysis.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "fileName": { "type": "string" },
+        "rawData": { "type": "string" },
+        "analysis": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "fileName", "rawData", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/feedback/{feedbackId}": {
+      "schema": "feedback",
+      "description": "User feedback collection"
+    },
+    "/userDatasets/{datasetId}": {
+      "schema": "userDatasets",
+      "description": "User uploaded datasets"
+    }
+  }
+}

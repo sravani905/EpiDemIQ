@@ -1,0 +1,7 @@
+{
+  "name": "EpiDemIQ",
+  "description": "A student research project for tracking and predicting epidemic trends using real-world datasets and AI analysis.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
